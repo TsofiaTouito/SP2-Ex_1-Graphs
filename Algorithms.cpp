@@ -1,13 +1,18 @@
+//tsofiatouito2@gmail.com
+//id-324953900
+
 #include "Algorithms.hpp"
 
 using namespace ariel;
 using namespace std;
+using std::vector;
+using std:: to_string;
 
 
 
-void Algorithms::dfs(const Graph& g,vector<bool> &visited, int v){
+void Algorithms::dfs(const Graph& g,vector<bool> &visited, size_t v){
     visited[v] = true;
-    for(int i = 0; i< visited.size() ; i++){
+    for(size_t i = 0; i< visited.size() ; i++){
         if(g.getGraph()[v][i]!=0 && !visited[i]){
             dfs(g ,visited, i);
         }
@@ -16,27 +21,26 @@ void Algorithms::dfs(const Graph& g,vector<bool> &visited, int v){
 
 
 
-void Algorithms::bfs(const Graph& g, int src, vector<int>& dist, vector<int>& prev, vector<string>& color){
+void Algorithms::bfs(const Graph& g, size_t src, vector<int>& dist, vector<int>& prev, vector<string>& color){
 
-    int vertices = g.getGraph().size();
-    queue<int> queue;
+    size_t vertices = g.getGraph().size();
+    queue<size_t> queue;
     dist[src] = 0;            //initilize source vertex's values
     color[src] = "gray";             
     queue.push(src);
-    int curr;
+    size_t curr;
 
     while(!queue.empty()){
         curr = queue.front();
         queue.pop();
         
-        for(int i = 0 ; i < vertices ; i++){
+        for(size_t i = 0 ; i < vertices ; i++){
             if(g.getGraph()[curr][i]!=0 && color[i] == "white"){
-                color[i] = "gray";            // visited 
+                color[i] = "gray";            // mark as visited visited 
                 dist[i] = dist[curr] + 1;     
                 prev[i] = curr;               //the parent of vertex i in the path is curr
                 queue.push(i);
             }
-
         }
         color[curr] = "black";
     }
@@ -44,23 +48,26 @@ void Algorithms::bfs(const Graph& g, int src, vector<int>& dist, vector<int>& pr
 
 
 
-string Algorithms::findPath(int start, int end, vector<int>& dist, vector<int>& prev){
- //prev[i] = j , such that (i, j) is the last edge in the shortest path
-    string path = "-1";
-    int curr = end;
-
-    if(dist[end] != numeric_limits<int>::infinity()){
-    path = to_string(curr);
-    curr = prev[curr];
-
-        while(curr!=-1){
-            path.insert(0, to_string(curr)+"->");
-            curr = prev[curr];
-        }
-    }
-return path;
+//prev[i] = j , such that (i, j) is the last edge in the shortest path
+string Algorithms::findPath(int flag, size_t start, size_t end, vector<int>& dist, vector<int>& prev) {
+    
+if((flag == 1 && dist[end] == INT_MAX) || (flag == 0 && dist[end] == numeric_limits<int>::infinity())){
+    return "-1";
 }
 
+std::stringstream path;
+size_t curr = end;
+
+while (curr != static_cast<size_t>(-1)){
+    path << curr;
+    curr = static_cast<size_t>(prev[curr]);
+        if(curr != static_cast<size_t>(-1)) {
+            path << "->";
+        }
+    }
+
+    return path.str();
+}
 
 
 
@@ -70,7 +77,7 @@ bool Algorithms::isConnected(const Graph& g){
         throw std::invalid_argument("The graph is not loaded");
     }
 
-    int n = g.getGraph().size();
+    size_t n = g.getGraph().size();
     vector<bool> visited(n, false);  //Initialize the vector to represent the visited vertices
 
     dfs(g , visited, 0);
@@ -86,61 +93,61 @@ bool Algorithms::isConnected(const Graph& g){
 
 
 
-string Algorithms::shortestPath(const Graph& g, int start, int end){
+string Algorithms::shortestPath(const Graph& g, size_t start, size_t end){
 
-    if(!g.isLoaded()){
-        throw std::invalid_argument("The graph is not loaded");
-    }
+if(!g.isLoaded()){
+    throw std::invalid_argument("The graph is not loaded");
+}
 
-    int size = g.getGraph().size();
+size_t size = g.getGraph().size();
+vector<int> prev( size, -1);                  //prev[i] = j , such that (i, j) is the last edge in the shortest path
+int flag;
+
+if(!g.isWeighted()){  //the graph is not weighted - use bfs
+    flag = 0;
     vector<int> dist( size, numeric_limits<int>::infinity());    //dist[i] is the distance between vertex src to vertex i
-    vector<int> prev( size, -1);                  //prev[i] = j , such that (i, j) is the last edge in the shortest path
+    vector<string> color( size, "white");  //represent the state of the vertex 
+    bfs(g, start, dist, prev, color);
+        return findPath(flag, start, end, dist, prev);
+}
 
-
-    if(!g.isWeighted()){  //the graph is not weighted - use bfs
-    
-            vector<string> color( size, "white");                        //represent the state of the vertex 
-            bfs(g, start, dist, prev, color);
-    }
-
-    else{    //the graph is weighted and has negative values - use Bellman-Ford
-        if(BelmanFord(g, dist, prev)){
-    
-
+else{    //the graph is weighted and has negative values - use Bellman-Ford
+    flag = 1;
+    vector<int> dist( size, INT_MAX);    //dist[i] is the distance between vertex src to vertex i
+        if(BelmanFord(g, start,dist, prev)){
+            return findPath(flag, start, end, dist, prev);
         }
-
     }
-    
-return findPath(start, end, dist, prev);
 
+return "-1";
 }
 
 
-void Algorithms::relax(const Graph& g, int u, int v, vector<int>& dist, vector<int>& prev){
+void Algorithms::relax(const Graph& g, size_t u, size_t v, vector<int>& dist, vector<int>& prev){
 
-    if(g.getGraph()[u][v]!=0 && dist[u]!= numeric_limits<int>::infinity()){
-
-        if(dist[v] > dist[u] + g.getGraph()[u][v]){
-            dist[v] = dist[u] + g.getGraph()[u][v];
+    int weight =  g.getGraph()[u][v];
+    if(weight!=0 && dist[u]!=INT_MAX && dist[v] > dist[u] + weight){
+            dist[v] = dist[u] + weight;
             prev[v] = u;
         }
-    }
 }
 
-bool Algorithms::BelmanFord(const Graph& g, vector<int>& dist, vector<int>& prev){
-int vertices = g.getGraph().size();
+bool Algorithms::BelmanFord(const Graph& g,size_t src, vector<int>& dist, vector<int>& prev){
 
-    for(int i = 0; i < vertices-1 ; i++){
-        for(int u = 0 ; u < vertices; u++){
-            for(int v = 0 ; v < vertices; v++){
+dist[src] = 0;
+size_t vertices = g.getGraph().size();
+
+    for(size_t i = 0; i < vertices-1 ; i++){
+        for(size_t u = 0 ; u < vertices; u++){
+            for(size_t v = 0 ; v < vertices; v++){
                 relax( g, u, v, dist, prev);
             }
         }
     }
 
-    for(int u = 0 ; u < vertices; u++){
-            for(int v = 0 ; v < vertices; v++){
-                if(g.getGraph()[u][v] != 0 && dist[u]!=numeric_limits<int>::infinity() && dist[v] > dist[u] + g.getGraph()[u][v]){
+    for(size_t u = 0 ; u < vertices; u++){
+            for(size_t v = 0 ; v < vertices; v++){
+                if(g.getGraph()[u][v] != 0 && dist[v] > dist[u] + g.getGraph()[u][v]){
                     cout<<"There is negative cycle"<<endl;
                     return false;
                 }
@@ -151,51 +158,118 @@ return true;
 }
 
 
+string Algorithms::isContainsCycle(const Graph& g) {
+size_t vertices = g.getGraph().size();  
+vector<bool> visited(vertices, false);  //track visited vertices
 
-
-
-
-/*
-    int Algorithms::isContainsCycle(const Graph& g);
-
-    int Algorithms::isBipartite(const Graph& g);
-
-    int Algorithms::negativeCycle(const Graph& g);
-
-*/
-
-using namespace std;
-int main(){
-
-    Graph g;
-    // 3x3 matrix that represents a connected graph.
-    vector<vector<int>> graph = {
-        {0, 1, 0},
-        {1, 0, 1},
-        {0, 1, 0}};
-    g.loadGraph(graph); // Load the graph to the object.
-
-    g.printGraph();                                    // Should print: "Graph with 3 vertices and 4 edges."
-    cout <<"hi \n"<< Algorithms::isConnected(g) << endl; 
-    cout << Algorithms::shortestPath(g, 0, 2) << endl; // Should print: 0->1->2.
-
-
-  cout<<"graph number 2"<<endl;
- vector<vector<int>> graph2 = {
-        {0, 1, 1, 0, 0},
-        {1, 0, 1, 0, 0},
-        {1, 1, 0, 1, 0},
-        {0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0}};
-
-    g.loadGraph(graph2); // Load the graph to the object.
-
-    g.printGraph();                                    // Should print: "Graph with 5 vertices and 8 edges."
-    cout << Algorithms::isConnected(g) << endl;        // Should print: "0" (false).
-    cout << Algorithms::shortestPath(g, 0, 4) << endl; // Should print: "-1" (there is no path between 0 and 4).
-
-    cout << g.isSymmetric() << endl;
-    cout << g.isWeighted() << endl;
-    
+for (size_t u = 0; u < vertices; u++) {
+    if(!visited[u]) {    //if vertex u is not visited, start DFS from it
+       string cycle = dfsUtil(g, visited, u, -1);  //-1 represents no parent
+            if (!cycle.empty()) {
+                return cycle; //return the cycle path if found
+            }
+        }
+    }
+    return "0"; //no cycle is found
 }
+
+
+
+string Algorithms::dfsUtil(const Graph& g, vector<bool> &visited, size_t u, int parent) {
+visited[u] = true; 
+
+for (size_t i = 0; i < g.getGraph().size(); i++) {    //explore all adjacent vertices of u
+    if (g.getGraph()[u][i] != 0) {             //check for an edge between u and i
+            if (!visited[i]) {
+                string cycle = dfsUtil(g, visited, i, u); 
+                if (!cycle.empty()) {
+                    return to_string(u) + "->" + cycle;   //construct the cycle path
+                }
+            }
+            else if (i != parent) {
+                return to_string(u) + "->" + to_string(i);   //if a back edge is found -> cycle detected
+            }
+        }
+    }
+return "";   //no cycle found in this path
+}
+
+
+
+string Algorithms::isBipartite(const Graph& g) {
+if (!g.isLoaded()) {
+    throw invalid_argument("The graph isn't loaded.");
+}
+
+set<int> A;
+set<int> B;
+string elemA, elemB, ans; //convert sets A and B to strings
+
+size_t size = g.getGraph().size();
+vector<string> color(size, "None");   // Represents the color of vertices
+vector<bool> visited(size, false);    // Track visited vertices
+
+dfsColor(g, visited, color, 0);
+
+for(size_t i = 0; i < size; i++){
+    if(color[i] == "Pink") {
+        A.insert(i);
+    }
+    else if(color[i] == "Red"){
+        B.insert(i);
+    }
+
+    for (size_t j = 0; j < size; j++) {
+        if (g.getGraph()[i][j] != 0) {
+            if (i != j && color[i] == color[j]) {
+                return "0";
+            }
+        }
+    }
+}
+
+for(int element : A){
+    elemA += std::to_string(element) + ",";
+}
+
+for (int element : B) {
+    elemB += std::to_string(element) + ",";
+}
+
+//remove trailing commas
+if(!elemA.empty()){elemA.pop_back();}  
+if(!elemB.empty()){elemB.pop_back();}
+
+ans = "The graph is bipartite: A={" + elemA + "}, B={" + elemB + "}";
+return ans;
+}
+
+void Algorithms::dfsColor(const Graph& g, vector<bool>& visited, vector<string>& color, size_t v) {
+    visited[v] = true;
+
+    if (color[v] == "None") {
+        color[v] = "Pink";
+    }
+
+    for (size_t i = 0; i < g.getGraph().size(); i++) {
+        if (g.getGraph()[v][i] != 0 && !visited[i]) {
+            if (color[i] == "None") {
+                color[i] = (color[v] == "Pink") ? "Red" : "Pink";
+            }
+            dfsColor(g, visited, color, i);
+        }
+    }
+}
+
+
+bool Algorithms::negativeCycle(const Graph& g){
+
+size_t size = g.getGraph().size();
+vector<int> dist(size, INT_MAX);
+vector<int> prev(size, -1);
+
+return !(BelmanFord(g, 0, dist, prev)); //return true if a negative cycle exists
+}
+
+
 
