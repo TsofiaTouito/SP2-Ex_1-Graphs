@@ -1,0 +1,38 @@
+#tsofiatouito2@gmail.com
+#id-324953900
+CXX=clang++
+CXXFLAGS=-std=c++11 -Werror -Wsign-conversion
+VALGRIND_FLAGS=-v --leak-check=full --show-leak-kinds=all --error-exitcode=99
+
+# List of source files
+SOURCES=Graph.cpp Algorithms.cpp TestCounter.cpp Test.cpp
+OBJECTS=$(subst .cpp,.o,$(SOURCES))
+
+# Default target: runs the demo
+run: demo
+	./$^
+
+# Build the demo executable
+demo: Demo.o $(filter-out TestCounter.o Test.o,$(OBJECTS))
+	$(CXX) $(CXXFLAGS) $^ -o demo
+
+# Build the test executable
+test: Test.o TestCounter.o $(filter-out Demo.o,$(OBJECTS))
+	$(CXX) $(CXXFLAGS) $^ -o test
+
+# Run clang-tidy with specified checks and warnings
+tidy:
+	clang-tidy $(SOURCES) -checks=bugprone-*,clang-analyzer-*,cppcoreguidelines-*,performance-*,portability-*,readability-*,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-owning-memory --warnings-as-errors=-* --
+
+# Run valgrind memory check on demo and test
+valgrind: demo test
+	valgrind --tool=memcheck $(VALGRIND_FLAGS) ./demo 2>&1 | { egrep "lost| at " || true; }
+	valgrind --tool=memcheck $(VALGRIND_FLAGS) ./test 2>&1 | { egrep "lost| at " || true; }
+
+# Compile .cpp files to .o object files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) --compile $< -o $@
+
+# Clean up generated files
+clean:
+	rm -f *.o demo test Graph
