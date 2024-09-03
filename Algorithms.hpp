@@ -1,43 +1,52 @@
+//tsofiatouito2@gmail.com
+//id-324953900
+#pragma once
 #include "Graph.hpp"
 #include <iostream>
-//#include <unordered_set>
+#include <set>
 #include <vector>
 #include <limits> 
 #include <queue>
 #include <string>
+#include <climits>
+#include <sstream>
+
+using namespace ariel;
+using namespace std;
 
 using std::vector;
 using std::string;
 using std::pair;
-using namespace ariel;
-using namespace std;
 
 namespace ariel{
 
 class Algorithms{
     public:
 
-    static void dfs(const Graph&, vector<bool>&, int v);
+    static void dfs(const Graph&, vector<bool>&, size_t v);
 
-    static void bfs(const Graph& , int, vector<int>&, vector<int>&, vector<string>&);
+    static void bfs(const Graph& , size_t, vector<int>&, vector<int>&, vector<string>&);
 
-    static string findPath(int , int , vector<int>&, vector<int>&);
+    static string findPath(int ,size_t , size_t , vector<int>&, vector<int>&);
 
-    static void relax(const Graph&, int ,int, vector<int>&, vector<int>&);
+    static void relax(const Graph&, size_t ,size_t, vector<int>&, vector<int>&);
     
-    static bool BelmanFord(const Graph&, int ,  vector<int>& , vector<int>& );
+    static bool BelmanFord(const Graph&, size_t, vector<int>& , vector<int>& );
 
     static bool isConnected(const Graph&);
 
-    static string shortestPath(const Graph& , int, int);
-/*
-    static int isContainsCycle(const Graph&);
+    static string shortestPath(const Graph& , size_t, size_t);
 
-    static int isBipartite(const Graph&);
+    static string dfsUtil(const Graph& , vector<bool>&, size_t, int);
 
-    static int negativeCycle(const Graph&);
-*/
+    static string isContainsCycle(const Graph&);
+
+    static string isBipartite(const Graph&);
+
+    static void dfsColor(const Graph& ,vector<bool>&, vector<string>&, size_t);
+
+    static bool negativeCycle(const Graph&);
 
 
 };
-};
+}
