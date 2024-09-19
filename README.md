@@ -1,9 +1,6 @@
 Tsofia touito
 tsofiatouito2@gmail.com
 
-Here is the `README.md` file for your project:
-
----
 
 # Graph Algorithms and Operations - Assignment 1
 
