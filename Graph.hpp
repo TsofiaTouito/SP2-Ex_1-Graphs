@@ -64,7 +64,7 @@ class Graph {
     // helper functions
     bool isContained(const ariel::Graph& other) const;   // is Graph contains other
     bool sizeCheck(const ariel::Graph& , const ariel::Graph&) const;       // check that both graph is n*n
-    int numEdges(const ariel::Graph&) const;
+    size_t numEdges() const;
 
     friend ostream& operator<<(ostream& stream, const Graph& g){ // <<Graph 
 
