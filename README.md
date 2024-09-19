@@ -54,14 +54,10 @@ The project is organized into the following files:
    make
    ```
 
-2. **Run the program**:
-   - To run the main demo:
-     ```bash
-     ./demo
-     ```
 
    - To run the unit tests:
      ```bash
+     make test
      ./test
      ```
 
