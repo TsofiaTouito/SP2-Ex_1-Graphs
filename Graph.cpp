@@ -87,7 +87,7 @@ bool Graph::hasNegVal() const{
 
 //operators implementation 
 
-Graph& Graph::operator+(){  // Operator + unary
+Graph& Graph::operator+() const{  // Operator + unary
     return *this;
 }
 Graph Graph::operator+(const Graph& other){    // Graph+other
