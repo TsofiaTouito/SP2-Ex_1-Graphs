@@ -10,13 +10,59 @@ using std:: to_string;
 
 
 
+
+
+
+//----------------------------------Help functions implementation---------------------------------------------------
+
+
+//prev[i] = j , such that (i, j) is the last edge in the shortest path
+//flag = 0 for bfs, flag = 1 for Bellman-ford
+std::string Algorithms::findPath(int flag, size_t start, size_t end, std::vector<int>& dist, std::vector<int>& prev) {
+
+    // If no path exists
+    if ((flag == 1 && dist[end] == INT_MAX) || (flag == 0 && dist[end] == std::numeric_limits<int>::infinity())) {
+        return "-1";
+    }
+
+    std::stack<size_t> pathStack;
+    size_t curr = end;
+
+    // Traverse the prev array to collect the path
+    while (curr != static_cast<size_t>(-1)) {       //no parent is represented by -1
+        pathStack.push(curr);                       // Push vertices to the stack
+        curr = static_cast<size_t>(prev[curr]);
+    }
+
+    // Build the path string by popping the stack (reversed order)
+    std::stringstream path;
+    while (!pathStack.empty()) {
+        path << pathStack.top();  // Get the top of the stack
+        pathStack.pop();          // Pop the top element
+        if (!pathStack.empty()) {
+            path << "->";         // Add "->" between nodes
+        }
+    }
+
+    return path.str();
+}
+
+
+
+
 void Algorithms::dfs(const Graph& g,vector<bool> &visited, size_t v){
+    
+    //Visit vertex v
     visited[v] = true;
+    
     for(size_t i = 0; i< visited.size() ; i++){
+
+        //If exist edge and we didn't visit the neighbor
         if(g.getGraph()[v][i]!=0 && !visited[i]){
             dfs(g ,visited, i);
         }
     }
+
 }
 
 
@@ -48,37 +94,74 @@ void Algorithms::bfs(const Graph& g, size_t src, vector<int>& dist, vector<int>&
 
 
 
-//prev[i] = j , such that (i, j) is the last edge in the shortest path#include <stack>
-std::string Algorithms::findPath(int flag, size_t start, size_t end, std::vector<int>& dist, std::vector<int>& prev) {
-    // If no path exists
-    if ((flag == 1 && dist[end] == INT_MAX) || (flag == 0 && dist[end] == std::numeric_limits<int>::infinity())) {
-        return "-1";
-    }
+void Algorithms::relax(const Graph& g, size_t u, size_t v, vector<int>& dist, vector<int>& prev){
 
-    std::stack<size_t> pathStack;
-    size_t curr = end;
+    int weight =  g.getGraph()[u][v]; 
 
-    // Traverse the prev array to collect the path
-    while (curr != static_cast<size_t>(-1)) {
-        pathStack.push(curr);  // Push vertices to the stack
-        curr = static_cast<size_t>(prev[curr]);
-    }
+    //If exist an edge and 
+    if(weight!=0 && dist[u]!=INT_MAX && dist[v] > dist[u] + weight){
+            dist[v] = dist[u] + weight;
+            prev[v] = u;
+        }
+}
 
-    // Build the path string by popping the stack (reversed order)
-    std::stringstream path;
-    while (!pathStack.empty()) {
-        path << pathStack.top();  // Get the top of the stack
-        pathStack.pop();          // Pop the top element
-        if (!pathStack.empty()) {
-            path << "->";         // Add "->" between nodes
+
+string Algorithms::dfsUtil(const Graph& g, vector<bool>& visited, size_t u, int parent) {
+    visited[u] = true;
+
+    for (size_t i = 0; i < g.getGraph().size(); i++) {  // explore all adjacent vertices of u
+        if (g.getGraph()[u][i] != 0) {  // check for an edge between u and i
+            if (!visited[i]) {
+                string cycle = dfsUtil(g, visited, i, u);
+                if (!cycle.empty()) {
+                    cycle += "->" + to_string(u);  // append the current vertex to the cycle
+                    return cycle;  // construct the cycle path in reverse order
+                }
+            } else if (i != parent) {
+                return to_string(i) + "->" + to_string(u);  // if a back edge is found -> cycle detected
+            }
         }
     }
 
-    return path.str();
+    return "";  // no cycle found in this path
 }
 
 
 
+void Algorithms::dfsColor(const Graph& g, vector<bool>& visited, vector<string>& color, size_t v) {
+    visited[v] = true;
+
+    if (color[v] == "None") {
+        color[v] = "Pink";
+    }
+
+    for (size_t i = 0; i < g.getGraph().size(); i++) {
+        if (g.getGraph()[v][i] != 0 && !visited[i]) {
+            if (color[i] == "None") {
+                color[i] = (color[v] == "Pink") ? "Red" : "Pink";
+            }
+            dfsColor(g, visited, color, i);
+        }
+    }
+}
+
+
+bool Algorithms::negativeCycle(const Graph& g){
+
+size_t size = g.getGraph().size();
+vector<int> dist(size, INT_MAX);
+vector<int> prev(size, -1);
+
+return !(BelmanFord(g, 0, dist, prev)); //return true if a negative cycle exists
+}
+
+
+
+//------------------------------------------------------------------------------------------------------------------
+
+
+
+//Check the conectivity of the graph by dfs traversal
 bool Algorithms::isConnected(const Graph& g){
 
     if(!g.isLoaded()){
@@ -90,6 +173,7 @@ bool Algorithms::isConnected(const Graph& g){
 
     dfs(g , visited, 0);
     
+    //
     bool allTrue = all_of(visited.begin(), visited.end(), [](bool b) { return b; });
 
     if(allTrue){
@@ -131,21 +215,14 @@ return "-1";
 }
 
 
-void Algorithms::relax(const Graph& g, size_t u, size_t v, vector<int>& dist, vector<int>& prev){
-
-    int weight =  g.getGraph()[u][v];
-    if(weight!=0 && dist[u]!=INT_MAX && dist[v] > dist[u] + weight){
-            dist[v] = dist[u] + weight;
-            prev[v] = u;
-        }
-}
-
 bool Algorithms::BelmanFord(const Graph& g,size_t src, vector<int>& dist, vector<int>& prev){
 
 dist[src] = 0;
 size_t vertices = g.getGraph().size();
 
+    //Loop n-1 times
     for(size_t i = 0; i < vertices-1 ; i++){
+
         for(size_t u = 0 ; u < vertices; u++){
             for(size_t v = 0 ; v < vertices; v++){
                 relax( g, u, v, dist, prev);
@@ -166,6 +243,7 @@ return true;
 }
 
 
+
 string Algorithms::isContainsCycle(const Graph& g) {
     size_t vertices = g.getGraph().size();  
     vector<bool> visited(vertices, false);  // track visited vertices
@@ -183,31 +261,15 @@ string Algorithms::isContainsCycle(const Graph& g) {
     return "0";  // no cycle found
 }
 
-string Algorithms::dfsUtil(const Graph& g, vector<bool>& visited, size_t u, int parent) {
-    visited[u] = true;
-
-    for (size_t i = 0; i < g.getGraph().size(); i++) {  // explore all adjacent vertices of u
-        if (g.getGraph()[u][i] != 0) {  // check for an edge between u and i
-            if (!visited[i]) {
-                string cycle = dfsUtil(g, visited, i, u);
-                if (!cycle.empty()) {
-                    cycle += "->" + to_string(u);  // append the current vertex to the cycle
-                    return cycle;  // construct the cycle path in reverse order
-                }
-            } else if (i != parent) {
-                return to_string(i) + "->" + to_string(u);  // if a back edge is found -> cycle detected
-            }
-        }
-    }
-
-    return "";  // no cycle found in this path
-}
 
 
+//Check if the graph is bipartite by color in trying to color 2 colors
 string Algorithms::isBipartite(const Graph& g) {
+
 if (!g.isLoaded()) {
     throw invalid_argument("The graph isn't loaded.");
 }
+
 
 set<int> A;
 set<int> B;
@@ -227,6 +289,7 @@ for(size_t i = 0; i < size; i++){
         B.insert(i);
     }
 
+    //Check if it is a legal coloring
     for (size_t j = 0; j < size; j++) {
         if (g.getGraph()[i][j] != 0) {
             if (i != j && color[i] == color[j]) {
@@ -251,32 +314,3 @@ if(!elemB.empty()){elemB.pop_back();}
 ans = "The graph is bipartite: A={" + elemA + "}, B={" + elemB + "}";
 return ans;
 }
-
-void Algorithms::dfsColor(const Graph& g, vector<bool>& visited, vector<string>& color, size_t v) {
-    visited[v] = true;
-
-    if (color[v] == "None") {
-        color[v] = "Pink";
-    }
-
-    for (size_t i = 0; i < g.getGraph().size(); i++) {
-        if (g.getGraph()[v][i] != 0 && !visited[i]) {
-            if (color[i] == "None") {
-                color[i] = (color[v] == "Pink") ? "Red" : "Pink";
-            }
-            dfsColor(g, visited, color, i);
-        }
-    }
-}
-
-
-bool Algorithms::negativeCycle(const Graph& g){
-
-size_t size = g.getGraph().size();
-vector<int> dist(size, INT_MAX);
-vector<int> prev(size, -1);
-
-return !(BelmanFord(g, 0, dist, prev)); //return true if a negative cycle exists
-}
-
-
